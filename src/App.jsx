@@ -272,7 +272,7 @@ function App() {
       <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-8">
           <h1 className="text-3xl font-bold mb-2">Job Application Tracker</h1>
-          <p className="opacity-90">Omar AlMalky - 2025 Job Search</p>
+          <p className="opacity-90">Omar AlMalky - 2026 Job Search</p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-white/20 backdrop-blur-lg rounded-lg p-4">
