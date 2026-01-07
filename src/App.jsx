@@ -5,6 +5,7 @@ function App() {
   const [applications, setApplications] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editingApp, setEditingApp] = useState(null); // Track which app we're editing
   const [formData, setFormData] = useState({
     date: '',
     company: '',
@@ -40,12 +41,42 @@ function App() {
   };
 
   const openModal = () => {
-    setFormData({ ...formData, date: new Date().toISOString().split('T')[0] });
+    setEditingApp(null); // Clear editing state
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      company: '',
+      role: '',
+      match: '',
+      status: 'Applied',
+      followup: '',
+      salary: '',
+      tags: '',
+      link: '',
+      notes: '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (app) => {
+    setEditingApp(app); // Set which app we're editing
+    setFormData({
+      date: app.date,
+      company: app.company,
+      role: app.role,
+      match: app.match.toString(),
+      status: app.status,
+      followup: app.followup || '',
+      salary: app.salary || '',
+      tags: app.tags || '',
+      link: app.link || '',
+      notes: app.notes || '',
+    });
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setEditingApp(null);
     setFormData({
       date: '',
       company: '',
@@ -63,7 +94,7 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newApp = {
+    const appData = {
       date: formData.date,
       company: formData.company,
       role: formData.role,
@@ -76,14 +107,31 @@ function App() {
       notes: formData.notes || null,
     };
 
-    const { error } = await supabase.from('applications').insert([newApp]);
+    if (editingApp) {
+      // Update existing application
+      const { error } = await supabase
+        .from('applications')
+        .update(appData)
+        .eq('id', editingApp.id);
 
-    if (error) {
-      console.error('Error adding application:', error);
-      alert('Error adding application. Please try again.');
+      if (error) {
+        console.error('Error updating application:', error);
+        alert('Error updating application. Please try again.');
+      } else {
+        loadApplications();
+        closeModal();
+      }
     } else {
-      loadApplications(); // Reload data
-      closeModal();
+      // Insert new application
+      const { error } = await supabase.from('applications').insert([appData]);
+
+      if (error) {
+        console.error('Error adding application:', error);
+        alert('Error adding application. Please try again.');
+      } else {
+        loadApplications();
+        closeModal();
+      }
     }
   };
 
@@ -105,7 +153,7 @@ function App() {
         console.error('Error deleting application:', error);
         alert('Error deleting application. Please try again.');
       } else {
-        loadApplications(); // Reload data
+        loadApplications();
       }
     }
   };
@@ -161,13 +209,13 @@ function App() {
       const { error } = await supabase
         .from('applications')
         .delete()
-        .neq('id', 0); // Delete all
+        .neq('id', 0);
 
       if (error) {
         console.error('Error clearing applications:', error);
         alert('Error clearing applications. Please try again.');
       } else {
-        loadApplications(); // Reload data
+        loadApplications();
       }
     }
   };
@@ -374,6 +422,12 @@ function App() {
                           </a>
                         )}
                         <button
+                          onClick={() => openEditModal(app)}
+                          className="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                        >
+                          Edit
+                        </button>
+                        <button
                           onClick={() => deleteApp(app.id)}
                           className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100"
                         >
@@ -398,7 +452,9 @@ function App() {
             className="bg-white rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold mb-6">Add Application</h2>
+            <h2 className="text-2xl font-bold mb-6">
+              {editingApp ? 'Edit Application' : 'Add Application'}
+            </h2>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
@@ -553,7 +609,7 @@ function App() {
                   type="submit"
                   className="px-5 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition"
                 >
-                  Add Application
+                  {editingApp ? 'Update Application' : 'Add Application'}
                 </button>
               </div>
             </form>
